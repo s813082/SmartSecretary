@@ -1,0 +1,5 @@
+﻿# 忽略 db目錄下的 .py 檔案
+/db/*.py
+
+# 忽略 log 目錄下的 txt 檔案
+/log/*.txt
