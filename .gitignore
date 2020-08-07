@@ -3,3 +3,6 @@
 
 # 忽略 log 目錄下的 txt 檔案
 /log/*.txt
+
+# 忽略 config 目錄下的 .py 檔案
+/config/*.py
