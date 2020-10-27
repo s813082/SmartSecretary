@@ -3,12 +3,12 @@ import EFormDB,config.dbconfig as DB
 def main():
     print("=======Environment=========")
     if DB.Server == 'VirtualSQL':
-        print("It is in 'PRD' environment")
+        print("You are in 'PRD' environment")
     else:
-        print("It is in 'QAS' environment")
+        print("You are in 'QAS' environment")
 
-    selectFuc = ['Change Password' , 'Change Phone Number', 'Return last sign','Delete the sign','Change Sign Name']
-    selectDB = ['WHQEFORM','WIHEFORM','GLOBALEFORM']
+    selectFuc = ['Change Password 修改登入密碼' , 'Change Phone Number 修改分機號碼', 'Return last sign 退回上一關卡','Delete the sign 刪除過期的單子','Change Sign Name','DeleteDNForm 刪除DN單子','CheckDeptExit 確認部門存在否']
+    selectDB = ['WHQEFORM','WIHEFORM','GLOBALEFORM','myForm']
     rowFuc = 0
     rowDB = 0
 
@@ -42,6 +42,10 @@ def main():
         EFormDB.DeleteEndList(FucDB)
     if b == '5':
         return EFormDB.ChangeSignName(FucDB)
+    if b == '6':
+        return EFormDB.DeleteDNForm(FucDB)
+    if b == '7':
+        return EFormDB.CheckDeptExit(FucDB)
 
 action = main()
 print(action)

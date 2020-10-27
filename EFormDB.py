@@ -1,4 +1,5 @@
-import pymssql 
+import pymssql
+import cx_Oracle
 import model.WHQ as whqmodel
 import config.dbconfig as Eform
 
@@ -75,8 +76,6 @@ def ChangeSignStep(DataBase):
             Serialid = row[0]
             Formid = row[1]
 
-
-
             cursor.execute("Select count(*) from afs_flow_history where sequenceid = '"+Sequenceid+"'")
             Canreturn = cursor.fetchone()
             if Canreturn[0] != 0:
@@ -122,11 +121,12 @@ def ChangeSignStep(DataBase):
 
     except Exception as message :
         print(message)
-# 刪除過期的˙單子
+# 刪除過期的單子
 def DeleteEndList(DataBase):
 
     if DataBase == 'GLOBALEFORM':
         Sequenceid = input('Type Sequenceid : ')
+        Action = input('Type need to approve(1) or reject(2) : ')
 
         conn = pymssql.connect(Eform.Server,Eform.Account,Eform.Password,DataBase)
         cursor = conn.cursor()
@@ -136,7 +136,13 @@ def DeleteEndList(DataBase):
             Data = cursor.fetchone()
             Serialid = Data[0]
             print('Update status AFS_Flow_Archive...')
-            cursor.execute("update AFS_Flow_Archive set status = '100' , step = '@End' , stepname = '' , Tobesignedid = '', TobesignedName = '' WHERE sequenceid = '"+Sequenceid+"'")
+            # 100 @End
+            # -100 @Reject
+            if Action == '1':
+                cursor.execute("update AFS_Flow_Archive set status = '100' , step = '@End' , stepname = '' , Tobesignedid = '', TobesignedName = '' WHERE sequenceid = '"+Sequenceid+"'")
+            else:
+                cursor.execute("update AFS_Flow_Archive set status = '-100' , step = '@Reject' , stepname = '' , Tobesignedid = '', TobesignedName = '' WHERE sequenceid = '" + Sequenceid + "'")
+
             conn.commit()
             print('Delete AFS_Q_Mail...')
             cursor.execute("delete AFS_Q_Mail WHERE serialid = '"+Serialid+"'")
@@ -149,7 +155,7 @@ def DeleteEndList(DataBase):
     else:
         print("You chose wrong database")
 # 將單子狀態改為Reject
-def ChangeSatus():
+def ChangeSatus(DataBase):
 
     Sequenceid = input('Type Sequenceid : ')
 
@@ -172,8 +178,7 @@ def ChangeSatus():
 
     except Exception as message:
         print(message)
-
-
+# 修改簽核者
 def ChangeSignName(DataBase):
     SequenceidList = []
     print('Please type the Sequenceid that you want to change, when you finish your type please type \'0\' to exit.')
@@ -211,3 +216,53 @@ def ChangeSignName(DataBase):
 
     except Exception as message:
         print(message)
+# 刪除DN單子
+def DeleteDNForm(DataBase):
+    if DataBase == 'WIHEFORM':
+        REFNO = input('Type REFNO : ')
+
+        conn = pymssql.connect(Eform.Server,Eform.Account,Eform.Password,DataBase)
+        cursor = conn.cursor()
+
+        try:
+            print("Get serial ID by REFNO")
+            cursor.execute("Select Serialid from dbo.afu_form_P09F001 where refNo = '"+REFNO+"'")
+            Data = cursor.fetchone()
+            Serialid = Data[0]
+
+            print("Delete AFS_FLOW...")
+            cursor.execute("DELETE AFS_FLOW WHERE SERIALID = '"+Serialid+"'")
+            conn.commit()
+            print("Delete AFS_FLOW_HISTORY...")
+            cursor.execute("DELETE AFS_FLOW_HISTORY WHERE SERIALID = '"+Serialid+"'")
+            conn.commit()
+            print("Delete AFU_FORM_P09F001...")
+            cursor.execute("DELETE AFU_FORM_P09F001 WHERE SERIALID = '"+Serialid+"'")
+            conn.commit()
+            print("Delete AFU_SIGN_P09F001...")
+            cursor.execute("DELETE AFU_SIGN_P09F001 WHERE SFORMSERIALID = '"+Serialid+"'")
+            conn.commit()
+
+            conn.close
+
+        except Exception as message:
+            print(message)
+    else:
+        print("You chose wrong database")
+# 查詢部門是否存在
+def CheckDeptExit(DataBase):
+    deptid = input('Type Department ID : ')
+    connOrcle = cx_Oracle.connect(Eform.ORC_UserName, Eform.ORC_Password, Eform.ORC_TNS, encoding="UTF8")
+    cur = connOrcle.cursor()
+
+    sql = "SELECT count(empid) as Num FROM empinfo where departmentid = upper('"+deptid+"')"
+    cur.execute(sql)
+
+    num = cur.fetchone()
+
+    if(num[0] == 0):
+        print("This department is not still exit.")
+    else:
+        print("This department is exit with ",num[0]," members.")
+
+    cur.close
